@@ -102,7 +102,7 @@ export default function Index() {
             Weather Data KSWS 13144 KNHSS Kariyad
           </h1>
           <p className="text-lg text-muted-foreground mb-4">
-            Live Climate Monitoring – Kariyad Weather Station
+            Live Weather Monitoring – Kariyad Weather Station
           </p>
           <div className="inline-block bg-accent px-4 py-2 rounded-lg">
             <p className="text-sm font-medium text-accent-foreground">
