@@ -1,0 +1,61 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@plugin 'tailwindcss-animate';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* TailwindV4 theme and design tokens - Blue/White Weather Theme */
+@theme {
+  /* Fonts */
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+
+  /* Blue & White Climate Theme */
+  --color-climate-blue: 210 100% 45%;
+  --color-climate-blue-light: 210 100% 90%;
+  --color-climate-blue-dark: 210 100% 25%;
+  --color-climate-gray: 215 15% 50%;
+  --color-climate-gray-light: 215 15% 95%;
+
+  /* Core theme colors */
+  --color-background: 0 0% 100%;
+  --color-foreground: 210 100% 25%;
+
+  --color-primary: 210 100% 45%;
+  --color-primary-foreground: 0 0% 100%;
+
+  --color-secondary: 210 100% 90%;
+  --color-secondary-foreground: 210 100% 25%;
+
+  --color-muted: 215 15% 95%;
+  --color-muted-foreground: 215 15% 50%;
+
+  --color-accent: 210 100% 90%;
+  --color-accent-foreground: 210 100% 25%;
+
+  --color-border: 215 15% 90%;
+  --color-input: 215 15% 95%;
+  --color-ring: 210 100% 45%;
+
+  /* Increase/decrease indicators */
+  --color-increase: 145 85% 40%;
+  --color-decrease: 0 85% 60%;
+  --color-neutral: 215 15% 50%;
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
