@@ -106,7 +106,7 @@ export default function Index() {
           </p>
           <div className="inline-block bg-accent px-4 py-2 rounded-lg">
             <p className="text-sm font-medium text-accent-foreground">
-              {formattedDate}
+              Today: {formattedDate}
             </p>
           </div>
         </div>

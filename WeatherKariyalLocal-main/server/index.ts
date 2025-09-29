@@ -6,6 +6,8 @@ import {
   handleWeatherHistory,
   handleAddWeatherData,
   handleDeleteWeatherData,
+  handleDownloadWeatherData,
+  handleGetAvailableDates,
 } from "./routes/weather";
 
 export function createServer() {
@@ -28,6 +30,8 @@ export function createServer() {
   app.get("/api/weather/history", handleWeatherHistory);
   app.post("/api/weather/add", handleAddWeatherData);
   app.delete("/api/weather/delete/:id", handleDeleteWeatherData);
+  app.get("/api/weather/download", handleDownloadWeatherData);
+  app.get("/api/weather/dates", handleGetAvailableDates);
 
   return app;
 }

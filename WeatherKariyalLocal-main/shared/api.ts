@@ -44,3 +44,24 @@ export interface WeatherResponse {
   today: DailyWeatherDisplay;
   lastUpdated: string;
 }
+
+export interface WeatherHistoryResponse {
+  data: WeatherData[];
+  total: number;
+  page: number;
+  limit: number;
+  availableYears: number[];
+  availableMonths: number[];
+}
+
+export interface AvailableDatesResponse {
+  years: number[];
+  months: { [year: number]: number[] };
+  totalRecords: number;
+}
+
+export interface WeatherDownloadResponse {
+  exportDate: string;
+  totalRecords: number;
+  data: WeatherData[];
+}

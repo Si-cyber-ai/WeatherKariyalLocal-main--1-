@@ -37,6 +37,9 @@ export default function WeatherMetric({
   };
 
   const getChangeText = () => {
+    if (comparison.previous === null) {
+      return "No previous data";
+    }
     if (comparison.change === null || comparison.change === 0) {
       return "No change";
     }
@@ -77,11 +80,13 @@ export default function WeatherMetric({
 
       {/* Comparison with yesterday */}
       <div className="flex items-center space-x-2">
-        {getChangeIcon()}
+        {comparison.previous !== null && getChangeIcon()}
         <span className={`text-sm font-medium ${getChangeColor()}`}>
           {getChangeText()}
         </span>
-        <span className="text-xs text-muted-foreground">vs yesterday</span>
+        {comparison.previous !== null && (
+          <span className="text-xs text-muted-foreground">vs previous day</span>
+        )}
       </div>
     </div>
   );

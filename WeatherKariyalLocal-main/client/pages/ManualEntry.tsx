@@ -1,6 +1,6 @@
 import Layout from "@/components/Layout";
 import { Shield, Save, Lock } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface FormData {
   date: string;
@@ -15,7 +15,7 @@ export default function ManualEntry() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [formData, setFormData] = useState<FormData>({
-    date: new Date().toISOString().split("T")[0],
+    date: new Date().toISOString().split("T")[0], // Default to today, but user can change
     rainfall: "",
     maxTemperature: "",
     minTemperature: "",
@@ -23,6 +23,7 @@ export default function ManualEntry() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [existingDataWarning, setExistingDataWarning] = useState("");
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,9 +46,11 @@ export default function ManualEntry() {
       });
 
       if (response.ok) {
-        setSubmitMessage("✅ Weather data saved successfully!");
+        const result = await response.json();
+        setSubmitMessage(`✅ Weather data saved successfully for ${formData.date}!`);
+        // Keep the same date in case user wants to update it, but clear other fields
         setFormData({
-          date: new Date().toISOString().split("T")[0],
+          date: formData.date, // Keep the current date
           rainfall: "",
           maxTemperature: "",
           minTemperature: "",
@@ -74,6 +77,30 @@ export default function ManualEntry() {
       setPassword("");
     }
   };
+
+  const checkExistingData = async (date: string) => {
+    try {
+      const response = await fetch(`/api/weather/history?year=${new Date(date).getFullYear()}&month=${new Date(date).getMonth() + 1}`);
+      if (response.ok) {
+        const data = await response.json();
+        const existingEntry = data.data.find((entry: any) => entry.date === date);
+        if (existingEntry) {
+          setExistingDataWarning(`⚠️ Data already exists for ${date}. Submitting will update the existing record.`);
+        } else {
+          setExistingDataWarning("");
+        }
+      }
+    } catch (error) {
+      console.error("Error checking existing data:", error);
+      setExistingDataWarning("");
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && formData.date) {
+      checkExistingData(formData.date);
+    }
+  }, [formData.date, isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
@@ -145,7 +172,7 @@ export default function ManualEntry() {
             Manual Data Entry
           </h1>
           <p className="text-muted-foreground">
-            Secure form for authorized weather data entry
+            Enter weather data for any date - today, yesterday, or any previous date
           </p>
         </div>
 
@@ -162,21 +189,68 @@ export default function ManualEntry() {
         {/* Working Form */}
         <div className="bg-white rounded-lg border border-border p-6">
           <form onSubmit={handleFormSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Date
                 </label>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  required
-                />
+                <div className="space-y-3">
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    required
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = new Date().toISOString().split("T")[0];
+                        setFormData({ ...formData, date: today });
+                      }}
+                      className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200"
+                    >
+                      Today
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        setFormData({ ...formData, date: yesterday.toISOString().split("T")[0] });
+                      }}
+                      className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200"
+                    >
+                      Yesterday
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const twoDaysAgo = new Date();
+                        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+                        setFormData({ ...formData, date: twoDaysAgo.toISOString().split("T")[0] });
+                      }}
+                      className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200"
+                    >
+                      2 Days Ago
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    💡 You can enter data for any previous date. Click the date field or use quick buttons above.
+                  </p>
+                  {existingDataWarning && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-sm text-yellow-800">{existingDataWarning}</p>
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Rainfall (mm)

@@ -1,3 +1,8 @@
 /AGENTS.md
 /netlify.toml
 node_modules
+
+# Weather data files (but keep directory structure)
+data/*.json
+data/weather-data-backup-*.json
+!data/.gitkeep
