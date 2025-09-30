@@ -4,8 +4,10 @@ import {
   WeatherData,
   DailyWeatherDisplay,
   WeatherComparison,
+  WeatherHistoryResponse,
+  AvailableDatesResponse,
 } from "@shared/api";
-import { weatherStore } from "../storage/weatherStorage";
+import { weatherStore } from "../storage/hybridWeatherStorage.js";
 
 function createComparison(
   current: number,
@@ -39,13 +41,13 @@ function createComparison(
   };
 }
 
-export const handleTodayWeather: RequestHandler = (req, res) => {
+export const handleTodayWeather: RequestHandler = async (req, res) => {
   try {
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split("T")[0];
 
     // Find today's data first
-    const todayData = weatherStore.getByDate(today);
+    const todayData = await weatherStore.getByDate(today);
     
     let currentData: WeatherData | null = null;
     let previousData: WeatherData | null = null;
@@ -56,10 +58,10 @@ export const handleTodayWeather: RequestHandler = (req, res) => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayDate = yesterday.toISOString().split("T")[0];
-      previousData = weatherStore.getByDate(yesterdayDate);
+      previousData = await weatherStore.getByDate(yesterdayDate);
     } else {
       // If no today's data, use the most recent entry
-      const allData = weatherStore.getAll().sort(
+      const allData = (await weatherStore.getAll()).sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
       
@@ -75,7 +77,7 @@ export const handleTodayWeather: RequestHandler = (req, res) => {
       previousDate.setDate(previousDate.getDate() - 1);
       const previousDateString = previousDate.toISOString().split("T")[0];
       
-      previousData = weatherStore.getByDate(previousDateString);
+      previousData = await weatherStore.getByDate(previousDateString);
     }
 
     if (!currentData) {
@@ -112,7 +114,7 @@ export const handleTodayWeather: RequestHandler = (req, res) => {
   }
 };
 
-export const handleWeatherHistory: RequestHandler = (req, res) => {
+export const handleWeatherHistory: RequestHandler = async (req, res) => {
   try {
     const { year, month } = req.query;
 
@@ -120,13 +122,13 @@ export const handleWeatherHistory: RequestHandler = (req, res) => {
     
     if (year && month) {
       // Get data for specific month
-      data = weatherStore.getByMonth(parseInt(year as string), parseInt(month as string));
+      data = await weatherStore.getByMonth(parseInt(year as string), parseInt(month as string));
     } else if (year) {
       // Get data for specific year
-      data = weatherStore.getByYear(parseInt(year as string));
+      data = await weatherStore.getByYear(parseInt(year as string));
     } else {
       // Get all data
-      data = weatherStore.getAll();
+      data = await weatherStore.getAll();
     }
 
     // Sort data by date (most recent first)
@@ -139,8 +141,6 @@ export const handleWeatherHistory: RequestHandler = (req, res) => {
       total: sortedData.length,
       page: 1,
       limit: sortedData.length,
-      availableYears: weatherStore.getAvailableYears(),
-      availableMonths: year ? weatherStore.getAvailableMonths(parseInt(year as string)) : [],
     });
   } catch (error) {
     console.error("Error in handleWeatherHistory:", error);
@@ -148,7 +148,7 @@ export const handleWeatherHistory: RequestHandler = (req, res) => {
   }
 };
 
-export const handleAddWeatherData: RequestHandler = (req, res) => {
+export const handleAddWeatherData: RequestHandler = async (req, res) => {
   try {
     const { date, rainfall, maxTemperature, minTemperature, humidity } =
       req.body;
@@ -191,14 +191,28 @@ export const handleAddWeatherData: RequestHandler = (req, res) => {
         });
     }
 
-    // Use upsertByDate to handle both new entries and updates
-    const savedData = weatherStore.upsertByDate(date, {
-      date,
-      rainfall: Number(rainfall),
-      maxTemperature: Number(maxTemperature),
-      minTemperature: Number(minTemperature),
-      humidity: Number(humidity),
-    });
+    // Check if data exists for this date
+    const existingData = await weatherStore.getByDate(date);
+    let savedData: WeatherData;
+
+    if (existingData) {
+      // Update existing data
+      savedData = await weatherStore.update(existingData.id, {
+        rainfall: Number(rainfall),
+        maxTemperature: Number(maxTemperature),
+        minTemperature: Number(minTemperature),
+        humidity: Number(humidity),
+      }) as WeatherData;
+    } else {
+      // Add new data
+      savedData = await weatherStore.add({
+        date,
+        rainfall: Number(rainfall),
+        maxTemperature: Number(maxTemperature),
+        minTemperature: Number(minTemperature),
+        humidity: Number(humidity),
+      });
+    }
 
     res.json({
       success: true,
@@ -211,7 +225,7 @@ export const handleAddWeatherData: RequestHandler = (req, res) => {
   }
 };
 
-export const handleDeleteWeatherData: RequestHandler = (req, res) => {
+export const handleDeleteWeatherData: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -220,7 +234,7 @@ export const handleDeleteWeatherData: RequestHandler = (req, res) => {
     }
 
     // Try to delete the data
-    const deleted = weatherStore.delete(id);
+    const deleted = await weatherStore.delete(id);
 
     if (!deleted) {
       return res.status(404).json({ error: "Weather data not found" });
@@ -236,7 +250,7 @@ export const handleDeleteWeatherData: RequestHandler = (req, res) => {
   }
 };
 
-export const handleDownloadWeatherData: RequestHandler = (req, res) => {
+export const handleDownloadWeatherData: RequestHandler = async (req, res) => {
   try {
     const { year, month, format = "json" } = req.query;
 
@@ -245,15 +259,15 @@ export const handleDownloadWeatherData: RequestHandler = (req, res) => {
     
     if (year && month) {
       // Get data for specific month
-      data = weatherStore.getByMonth(parseInt(year as string), parseInt(month as string));
+      data = await weatherStore.getByMonth(parseInt(year as string), parseInt(month as string));
       filename = `weather-data-${year}-${String(month).padStart(2, '0')}`;
     } else if (year) {
       // Get data for specific year
-      data = weatherStore.getByYear(parseInt(year as string));
+      data = await weatherStore.getByYear(parseInt(year as string));
       filename = `weather-data-${year}`;
     } else {
       // Get all data
-      data = weatherStore.getAll();
+      data = await weatherStore.getAll();
       filename = `weather-data-all`;
     }
 
@@ -290,20 +304,15 @@ export const handleDownloadWeatherData: RequestHandler = (req, res) => {
   }
 };
 
-export const handleGetAvailableDates: RequestHandler = (req, res) => {
+export const handleGetAvailableDates: RequestHandler = async (req, res) => {
   try {
-    const availableYears = weatherStore.getAvailableYears();
-    const dateInfo: { [year: number]: number[] } = {};
-    
-    availableYears.forEach(year => {
-      dateInfo[year] = weatherStore.getAvailableMonths(year);
-    });
+    const availableDates = await weatherStore.getAvailableDates();
 
     res.json({
-      years: availableYears,
-      months: dateInfo,
-      totalRecords: weatherStore.count(),
-    });
+      years: availableDates.years,
+      months: availableDates.months,
+      totalRecords: availableDates.totalRecords,
+    } as AvailableDatesResponse);
   } catch (error) {
     console.error("Error in handleGetAvailableDates:", error);
     res.status(500).json({ error: "Internal server error" });

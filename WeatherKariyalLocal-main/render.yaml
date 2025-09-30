@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: weather-kariyal
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false # Set this in Render dashboard
+      - key: SUPABASE_API_KEY
+        sync: false # Set this in Render dashboard
+      - key: SUPABASE_WEATHER_TABLE
+        value: weather_data
+    healthCheckPath: /api/demo

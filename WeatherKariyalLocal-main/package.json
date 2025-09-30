@@ -25,6 +25,7 @@
     "globe.gl": "^2.42.0",
     "html2canvas": "^1.4.1",
     "keen-slider": "^6.8.6",
+    "mongodb": "^6.20.0",
     "react-image-lightbox": "^5.1.4",
     "zod": "^3.23.8"
   },
