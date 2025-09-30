@@ -117,18 +117,25 @@ export const handleTodayWeather: RequestHandler = async (req, res) => {
 export const handleWeatherHistory: RequestHandler = async (req, res) => {
   try {
     const { year, month } = req.query;
+    console.log(`History request - Year: ${year}, Month: ${month}`);
 
     let data: WeatherData[];
     
     if (year && month) {
       // Get data for specific month
+      console.log(`Fetching data for month ${month} of year ${year}`);
       data = await weatherStore.getByMonth(parseInt(year as string), parseInt(month as string));
+      console.log(`Found ${data.length} records for ${year}-${month}`);
     } else if (year) {
       // Get data for specific year
+      console.log(`Fetching data for year ${year}`);
       data = await weatherStore.getByYear(parseInt(year as string));
+      console.log(`Found ${data.length} records for year ${year}`);
     } else {
       // Get all data
+      console.log(`Fetching all data`);
       data = await weatherStore.getAll();
+      console.log(`Found ${data.length} total records`);
     }
 
     // Sort data by date (most recent first)

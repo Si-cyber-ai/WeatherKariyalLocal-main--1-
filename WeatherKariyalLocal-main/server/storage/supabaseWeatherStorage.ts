@@ -53,8 +53,24 @@ export const supabaseWeatherStorage = {
   },
   async getByMonth(year: number, month: number): Promise<WeatherData[]> {
     const start = `${year}-${month.toString().padStart(2, "0")}-01`;
-    const end = `${year}-${month.toString().padStart(2, "0")}-31`;
-    return await supabaseRequest(`${WEATHER_TABLE}?date=gte.${start}&date=lte.${end}&order=date.desc`);
+    // Get the last day of the month dynamically
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const end = `${year}-${month.toString().padStart(2, "0")}-${lastDayOfMonth.toString().padStart(2, "0")}`;
+    
+    console.log(`Filtering Supabase data for year=${year}, month=${month}`);
+    console.log(`Date range: ${start} to ${end}`);
+    
+    try {
+      const result = await supabaseRequest(`${WEATHER_TABLE}?date=gte.${start}&date=lte.${end}&order=date.desc`);
+      console.log(`Found ${result.length} records for ${year}-${month.toString().padStart(2, "0")}`);
+      if (result.length > 0) {
+        console.log(`Sample dates:`, result.slice(0, 3).map(r => r.date));
+      }
+      return result;
+    } catch (error) {
+      console.error(`Error filtering by month in Supabase:`, error);
+      return [];
+    }
   },
   async getByYear(year: number): Promise<WeatherData[]> {
     const start = `${year}-01-01`;

@@ -80,12 +80,16 @@ export class WeatherDataStore {
     this.initializeDatabase();
   }
 
-  private async initializeDatabase(): Promise<void> {
+  private initializeDatabase(): void {
     this.useDatabase = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_API_KEY;
+    console.log("Environment check:");
+    console.log("SUPABASE_URL:", process.env.SUPABASE_URL ? "✓ Set" : "✗ Missing");
+    console.log("SUPABASE_API_KEY:", process.env.SUPABASE_API_KEY ? "✓ Set" : "✗ Missing");
+    
     if (this.useDatabase) {
-      console.log("Using Supabase for persistent storage");
+      console.log("✅ Using Supabase for persistent storage");
     } else {
-      console.log("Using file storage (local development)");
+      console.log("📁 Using file storage (local development)");
     }
   }
 
@@ -221,7 +225,10 @@ export class WeatherDataStore {
 
     // File storage implementation
     const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
-    const endDate = `${year}-${month.toString().padStart(2, '0')}-31`;
+    // Get the last day of the month dynamically
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDayOfMonth.toString().padStart(2, '0')}`;
+    console.log(`Filtering file data for ${year}-${month}: ${startDate} to ${endDate}`);
     
     return this.fileData
       .filter(item => item.date >= startDate && item.date <= endDate)
